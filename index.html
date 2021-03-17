@@ -1,0 +1,244 @@
+<!DOCTYPE html>
+<html lang="en" dir="ltr">
+  <head>
+    <meta charset="utf-8">
+    <title></title>
+    <link rel="preconnect" href="https://fonts.gstatic.com">
+<link href="https://fonts.googleapis.com/css2?family=Roboto+Mono&display=swap" rel="stylesheet">
+  </head>
+  <body>
+    <textarea id="main" type="text" autofocus=""></textarea>
+
+    <div id="test"></div>
+    <div id="results">
+      <p id="errors">Errors: </p>
+      <div class="spacer"> </div>
+      <p id="accuracy">Accuracy: </p>
+      <div class="spacer"> </div>
+      <p id="time">Time: </p>
+      <div class="spacer"> </div>
+      <p id="wpm">WPM: </p>
+
+    </div>
+
+  </body>
+  <style media="screen">
+    body{
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      background-color: #1f355a;
+      font-family: 'Roboto Mono', monospace;
+      color: white;
+    }
+
+    #main{
+      height: 1px;
+      width: 1px;
+      border: 1px solid white;
+      resize: none;
+      margin-top: 2px;
+    }
+
+    #test{
+      display: flex;
+      flex-flow: row wrap;
+     
+      width: 900px;
+      word-wrap: break-word;
+      background-color: #222531;
+      color: white;
+      position: absolute;
+      font-family: 'Roboto Mono', monospace;
+
+      padding-left: 15px;
+      padding-right: 15px;
+      padding-top: 30px;
+      padding-bottom: 30px;
+
+    }
+    #results{
+      margin-top: 100px;
+      display:flex;
+      flex-flow: row wrap;
+      justify-content: space-between;
+    }
+    .spacer{
+      width: 60px;
+    }
+  </style>
+  <script type="text/javascript">
+    let mainInput = document.querySelector('#main');
+    let testText = document.querySelector('#test');
+    let errors = document.querySelector('#errors');
+    let accuracy = document.querySelector('#accuracy');
+    let time = document.querySelector('#time');
+    let wPM = document.querySelector('#wpm');
+
+    let timerStarted = false;
+
+    const delay = ms => new Promise(res => setTimeout(res, ms));
+
+
+    function getValue(){
+      let text = '';
+      for(let element of testText.children){
+        if(element.innerHTML == '<br>'){
+          text = text + '\n';
+        }else{
+          text = text + element.innerHTML;
+        }
+      }
+      return text;
+    }
+
+    function updateResult(number, perc, timeIn, wpm){
+      errors.innerText += number;
+      accuracy.innerText += perc;
+      wPM.innerText += wpm;
+      time.innerText += timeIn;
+    }
+
+    function cleanResult(){
+      errors.innerText = 'Errors: ';
+      accuracy.innerText = 'Accuracy: ';
+      wPM.innerText = 'WPM: ';
+      time.innerText = 'Time: ';
+      timerStarted = false;
+    }
+
+    function wpmEval(text){
+      let now = Date.now();
+      let elapsed = (now - timerStarted)/1000;
+      let mins = elapsed / 60;
+      let words = text.trim().split(' ').length;
+      return{
+        seconds: elapsed + 's',
+        wpm: (words / mins).toFixed(1),
+      }
+    }
+
+    function errorEval(){
+      let value = mainInput.value;
+      let test = getValue();
+      let length = test.length;
+      let errors = 0;
+      for(let el in test){
+        if(test[el] != value[el]){
+          errors++;
+        }
+      }
+      let percentage = 100 - (errors * 100)/length;
+      return{
+        number: errors,
+        perc: `${Math.floor(percentage)}%`,
+      }
+    }
+
+
+    async function stateCheck(){
+      let testLength = testText.children.length;
+      let value = mainInput.value.length;
+      if(value == testLength){
+        let errors = errorEval();
+        let wpm = wpmEval(getValue());
+        updateResult(errors.number, errors.perc, wpm.seconds, wpm.wpm);
+        await delay(4000);
+        cleanResult();
+        mainInput.value = '';
+        evaluate();
+        testText.innerHTML = '';
+        getQuote();
+      }
+    }
+
+
+    function evaluate(){
+      try{
+        let currentValue = mainInput.value;
+        let children = testText.children;
+        for(let el in children){
+          if(el <= currentValue.length - 1){
+            if(children[el].innerHTML == currentValue[el]){
+              children[el].style.color = '#00e50f';
+              children[el].style.backgroundColor = 'rgb(38, 216, 41, 0.2)';
+
+            }else{
+              children[el].style.color = '#ff0000';
+              children[el].style.backgroundColor = 'rgb(231, 21, 21, 0.2)';
+            }
+          }else if(el == currentValue.length ){
+            //current digit
+            //styling
+            children[el].style.color = 'white';
+            children[el].style.backgroundColor = '#565252';
+            delay(100);
+            //height detection
+            let relativeHeight = children[el].offsetTop;
+            mainInput.style.marginTop = `${relativeHeight}px`;
+          }else{
+            children[el].style.color = 'white';
+            children[el].style.backgroundColor = '#222531';
+          }
+        }
+      }catch(e){
+
+      }
+    }
+
+    function createText(text){
+      for(let letter of text){
+        let letterP = document.createElement('p');
+        letterP.innerText = letter;
+        letterP.style.marginLeft = '0.5px';
+        letterP.style.marginRight = '0.5px';
+        letterP.style.marginTop = '0.5px';
+        letterP.style.marginBottom = '0.5px';
+        if(letter == ' '){
+          letterP.style.width = '9.61px';
+        }else if(letter == '\n'){
+          let whitespace = document.createElement('p');
+          whitespace.innerText = ' ';
+          whitespace.style.width = '9.61px';
+          testText.appendChild(whitespace);
+          let children = testText.children;
+          children[children.length-1].style.marginRight = '900px';
+        }
+        testText.appendChild(letterP);
+      }
+    }
+
+    mainInput.onkeydown = logKey;
+  async function logKey(e) {
+        if(!timerStarted){
+        timerStarted = Date.now();
+      }
+      await delay(200);
+      evaluate();
+      stateCheck();
+   }
+
+   async function getQuote(){
+     let res = await fetch('https://goquotes-api.herokuapp.com/api/v1/random?count=1');
+     let resJson = await res.json();
+     createText(resJson.quotes[0].text);
+   }
+   const repos = [
+   'https://raw.githubusercontent.com/MatteoBuccirossi/djs/master/src/addNew.js',
+   'https://raw.githubusercontent.com/DidierRLopes/GamestonkTerminal/main/gamestonk_terminal/discovery/alpha_vantage_api.py'
+   ]
+   async function getRepo(){
+      let res = await fetch(Math.floor(Math.random()*repos.length));
+      let resText = await res.text();
+      await createText(resText);     
+  }
+
+   testText.onclick = autofocus;
+
+   function autofocus(){
+     mainInput.focus({ preventScroll: true });
+   }
+   //getQuote();
+   getRepo();
+  </script>
+</html>
