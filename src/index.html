@@ -9,6 +9,7 @@
   <body>
     <textarea id="main" type="text" autofocus=""></textarea>
 
+    <div class="mainview"> </div>
     <div id="test"></div>
     <div id="results">
       <p id="errors">Errors: </p>
@@ -27,10 +28,13 @@
       display: flex;
       flex-direction: column;
       align-items: center;
-      background-color: #1f355a;
+      margin-top:0px;
+      margin-bottom: 0px;
+      background-color: #222531;
       font-family: 'Roboto Mono', monospace;
       color: white;
     }
+
 
     #main{
       height: 1px;
@@ -73,6 +77,7 @@
     let errors = document.querySelector('#errors');
     let accuracy = document.querySelector('#accuracy');
     let time = document.querySelector('#time');
+    let mainView = document.querySelector('.mainview');
     let wPM = document.querySelector('#wpm');
 
     let timerStarted = false;
@@ -81,8 +86,16 @@
 
 
     function getValue(){
+      let childrenIn= testText.children;
+      let children = [];
+      for(let el in childrenIn){
+          if(childrenIn[el].tagName == 'P'){
+            children.push(childrenIn[el]);
+          }
+        }
+       
       let text = '';
-      for(let element of testText.children){
+      for(let element of children){
         if(element.innerHTML == '<br>'){
           text = text + '\n';
         }else{
@@ -148,15 +161,22 @@
         mainInput.value = '';
         evaluate();
         testText.innerHTML = '';
-        getQuote();
+        getRepo();
       }
     }
 
 
     function evaluate(){
-      try{
+      
         let currentValue = mainInput.value;
-        let children = testText.children;
+        let childrenIn = testText.children;
+        let children= [];
+        for(let el in childrenIn){
+          if(childrenIn[el].tagName == 'P'){
+            children.push(childrenIn[el]);
+          }
+        }
+       
         for(let el in children){
           if(el <= currentValue.length - 1){
             if(children[el].innerHTML == currentValue[el]){
@@ -181,10 +201,10 @@
             children[el].style.backgroundColor = '#222531';
           }
         }
-      }catch(e){
-
-      }
+     
     }
+
+
 
     function createText(text){
       for(let letter of text){
@@ -197,15 +217,15 @@
         if(letter == ' '){
           letterP.style.width = '9.61px';
         }else if(letter == '\n'){
-          let whitespace = document.createElement('p');
-          whitespace.innerText = ' ';
-          whitespace.style.width = '9.61px';
-          testText.appendChild(whitespace);
+          let newLine = document.createElement('span');
           let children = testText.children;
-          children[children.length-1].style.marginRight = '900px';
+          let offsetRight = 900 - children[children.length-1].offsetLeft;
+          newLine.style.width = `900px`;
+          testText.appendChild(newLine);
         }
         testText.appendChild(letterP);
       }
+      //initBackground();
     }
 
     mainInput.onkeydown = logKey;
@@ -218,27 +238,26 @@
       stateCheck();
    }
 
-   async function getQuote(){
-     let res = await fetch('https://goquotes-api.herokuapp.com/api/v1/random?count=1');
-     let resJson = await res.json();
-     createText(resJson.quotes[0].text);
-   }
    const repos = [
+     'https://raw.githubusercontent.com/DidierRLopes/GamestonkTerminal/main/tests/test_dd_finviz_api.py',
+   'https://raw.githubusercontent.com/fastlane/fastlane/master/supply/spec/commands_generator_spec.rb',
+   'https://raw.githubusercontent.com/flameshot-org/flameshot/master/src/utils/colorutils.cpp',
+   'https://raw.githubusercontent.com/bettercap/bettercap/master/core/banner_test.go',
+   'https://raw.githubusercontent.com/Ryujinx/Ryujinx/master/Ryujinx.Graphics.Device/SizeCalculator.cs',
    'https://raw.githubusercontent.com/MatteoBuccirossi/djs/master/src/addNew.js',
    'https://raw.githubusercontent.com/DidierRLopes/GamestonkTerminal/main/gamestonk_terminal/discovery/alpha_vantage_api.py'
    ]
    async function getRepo(){
-      let res = await fetch(Math.floor(Math.random()*repos.length));
+      let res = await fetch(repos[Math.floor(Math.random()*repos.length)]);
       let resText = await res.text();
       await createText(resText);     
   }
 
    testText.onclick = autofocus;
 
-   function autofocus(){
+   function autofocus(e){
      mainInput.focus({ preventScroll: true });
    }
-   //getQuote();
    getRepo();
   </script>
 </html>
