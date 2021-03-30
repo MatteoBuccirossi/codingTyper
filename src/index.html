@@ -207,16 +207,26 @@
 
 
     function createText(text){
-      for(let letter of text){
+      for(let letter in text){
         let letterP = document.createElement('p');
-        letterP.innerText = letter;
+        letterP.innerText = text[letter];
         letterP.style.marginLeft = '0.5px';
         letterP.style.marginRight = '0.5px';
         letterP.style.marginTop = '0.5px';
         letterP.style.marginBottom = '0.5px';
-        if(letter == ' '){
-          letterP.style.width = '9.61px';
-        }else if(letter == '\n'){
+        if(text[letter] == ' '){
+          let previous =  text[letter -1 ];
+          if(previous == '\n' || previous == ' '){
+            letterP = document.createElement('span');
+            letterP.style.marginLeft = '0.5px';
+            letterP.style.marginRight = '0.5px';
+            letterP.style.marginTop = '0.5px';
+            letterP.style.marginBottom = '0.5px';
+            letterP.style.width = '9.61px';
+          }else{
+            letterP.style.width = '9.61px';
+          }
+        }else if(text[letter] == '\n'){
           let newLine = document.createElement('span');
           let children = testText.children;
           let offsetRight = 900 - children[children.length-1].offsetLeft;
